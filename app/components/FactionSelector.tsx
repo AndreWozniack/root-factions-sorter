@@ -99,12 +99,12 @@ export default function FactionSelector({
                 alignItems: "center",
                 padding: "12px",
                 backgroundColor: isSelected
-                  ? "rgba(255, 107, 157, 0.15)"
+                  ? "rgba(100, 255, 218, 0.15)"
                   : "rgba(255, 255, 255, 0.05)",
                 borderRadius: "8px",
                 border: `1px solid ${
                   isSelected
-                    ? "rgba(255, 107, 157, 0.4)"
+                    ? "rgba(100, 255, 218, 0.4)"
                     : "rgba(255, 255, 255, 0.1)"
                 }`,
                 cursor: "pointer",
@@ -112,12 +112,12 @@ export default function FactionSelector({
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.backgroundColor = isSelected
-                  ? "rgba(255, 107, 157, 0.25)"
+                  ? "rgba(100, 255, 218, 0.25)"
                   : "rgba(255, 255, 255, 0.1)";
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.backgroundColor = isSelected
-                  ? "rgba(255, 107, 157, 0.15)"
+                  ? "rgba(100, 255, 218, 0.15)"
                   : "rgba(255, 255, 255, 0.05)";
               }}
             >
@@ -130,7 +130,7 @@ export default function FactionSelector({
                   width: "18px",
                   height: "18px",
                   cursor: "pointer",
-                  accentColor: "#ff6b9d",
+                  accentColor: "#5AD876",
                 }}
               />
               <span
