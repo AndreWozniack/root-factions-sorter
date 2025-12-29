@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Root Sorter",
   description: "A Root faction sorter tool",
+  icons: {
+    icon: [{ url: "/malandroIcon.png" }, { url: "/icon.png" }],
+    shortcut: "/malandroIcon.png",
+    apple: "/malandroIcon.png",
+  },
 };
 
 export default function RootLayout({
