@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { FACTIONS, isValidDraw } from "./types";
 
-const INITIAL_PLAYERS = "Andre\nDavi\nArthur\nPebinha\nAlessandro\nJoão";
-const INITIAL_FACTIONS =
-  "Marqueses\nRapinas\nAliança da Floresta\nMalandro\nSenhor das Centenas\nGuardiões de Ferro\nLagartos Cultistas\nCompanhia Ribeirinha";
+const INITIAL_PLAYERS = "";
 
 const shuffleArray = (array: string[]) => {
   for (let i = array.length - 1; i > 0; i--) {
@@ -16,13 +15,36 @@ const shuffleArray = (array: string[]) => {
 
 export default function RootSorter() {
   const [playersInput, setPlayersInput] = useState(INITIAL_PLAYERS);
-  const [factionsInput, setFactionsInput] = useState(INITIAL_FACTIONS);
+  const [selectedFactions, setSelectedFactions] = useState<string[]>(
+    FACTIONS.map((f) => f.name)
+  );
   const [results, setResults] = useState<{ player: string; faction: string }[]>(
     []
   );
   const [error, setError] = useState("");
   const [isShuffling, setIsShuffling] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [reachInfo, setReachInfo] = useState<{
+    valid: boolean;
+    totalReach: number;
+    minReach: number;
+  } | null>(null);
+
+  const toggleFaction = (factionName: string) => {
+    setSelectedFactions((prev) =>
+      prev.includes(factionName)
+        ? prev.filter((f) => f !== factionName)
+        : [...prev, factionName]
+    );
+  };
+
+  const selectAllFactions = () => {
+    setSelectedFactions(FACTIONS.map((f) => f.name));
+  };
+
+  const deselectAllFactions = () => {
+    setSelectedFactions([]);
+  };
 
   useEffect(() => {
     if (countdown === null) return;
@@ -37,10 +59,7 @@ export default function RootSorter() {
         .split("\n")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
-      const factionList = factionsInput
-        .split("\n")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
+      const factionList = selectedFactions;
 
       const shuffledPlayers = shuffleArray([...playerList]);
       const shuffledFactions = shuffleArray([...factionList]);
@@ -52,15 +71,21 @@ export default function RootSorter() {
         })
       );
 
+      const numPlayers = playerList.length;
+      const drawnFactions = newResults.map((r) => r.faction);
+      const validation = isValidDraw(numPlayers, drawnFactions);
+      setReachInfo(validation);
+
       setResults(newResults);
       setIsShuffling(false);
       setCountdown(null);
     }
-  }, [countdown, playersInput, factionsInput]);
+  }, [countdown, playersInput, selectedFactions]);
 
   const handleShuffle = () => {
     setResults([]);
     setError("");
+    setReachInfo(null);
     setIsShuffling(true);
     setCountdown(3);
   };
@@ -130,6 +155,72 @@ export default function RootSorter() {
           </p>
         </div>
 
+        {/* Tabela de Referência de Facções */}
+        <div
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.05)",
+            borderRadius: "16px",
+            padding: "24px",
+            backdropFilter: "blur(10px)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            marginBottom: "30px",
+          }}
+        >
+          <h3
+            style={{
+              color: "#ffd700",
+              marginBottom: "16px",
+              fontSize: "1.3em",
+              textAlign: "center",
+            }}
+          >
+            📊 Referência de Alcance das Facções
+          </h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              gap: "8px",
+              marginBottom: "16px",
+            }}
+          >
+            {FACTIONS.map((faction) => (
+              <div
+                key={faction.name}
+                style={{
+                  padding: "10px 16px",
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "8px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                }}
+              >
+                <span style={{ color: "#fff", fontSize: "0.95em" }}>
+                  {faction.name}
+                </span>
+                <span
+                  style={{
+                    color: "#64ffda",
+                    fontWeight: "bold",
+                    fontSize: "1em",
+                  }}
+                >
+                  {faction.reach}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div
+            style={{ textAlign: "center", color: "#a8b2d1", fontSize: "0.9em" }}
+          >
+            <strong>Alcance mínimo por jogadores:</strong> 2 jogadores: 17+ | 3
+            jogadores: 18+ | 4 jogadores: 21+ | 5 jogadores: 25+ | 6 jogadores:
+            28+
+          </div>
+        </div>
+
         {/* Inputs Container */}
         <div
           style={{
@@ -174,7 +265,7 @@ export default function RootSorter() {
                 fontFamily: "inherit",
                 resize: "vertical",
               }}
-              placeholder="Andre&#10;Davi&#10;Arthur..."
+              placeholder="Player1&#10;Player2,&#10;Player3,..."
             />
           </div>
 
@@ -188,33 +279,145 @@ export default function RootSorter() {
               border: "1px solid rgba(255, 255, 255, 0.1)",
             }}
           >
-            <h3
+            <div
               style={{
-                color: "#ff6b9d",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
                 marginBottom: "16px",
-                fontSize: "1.3em",
               }}
             >
-              ⚔️ Facções Disponíveis
-            </h3>
-            <textarea
-              value={factionsInput}
-              onChange={(e) => setFactionsInput(e.target.value)}
-              rows={10}
+              <h3
+                style={{
+                  color: "#ff6b9d",
+                  fontSize: "1.3em",
+                  margin: 0,
+                }}
+              >
+                ⚔️ Facções Disponíveis
+              </h3>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={selectAllFactions}
+                  style={{
+                    padding: "6px 12px",
+                    fontSize: "0.85em",
+                    backgroundColor: "rgba(100, 255, 218, 0.2)",
+                    color: "#64ffda",
+                    border: "1px solid #64ffda",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  Todas
+                </button>
+                <button
+                  onClick={deselectAllFactions}
+                  style={{
+                    padding: "6px 12px",
+                    fontSize: "0.85em",
+                    backgroundColor: "rgba(255, 107, 157, 0.2)",
+                    color: "#ff6b9d",
+                    border: "1px solid #ff6b9d",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  Nenhuma
+                </button>
+              </div>
+            </div>
+            <div
               style={{
-                width: "100%",
-                padding: "16px",
-                boxSizing: "border-box",
-                backgroundColor: "rgba(255, 255, 255, 0.08)",
-                border: "1px solid rgba(255, 107, 157, 0.3)",
-                borderRadius: "12px",
-                color: "#fff",
-                fontSize: "1em",
-                fontFamily: "inherit",
-                resize: "vertical",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                maxHeight: "400px",
+                overflowY: "auto",
+                padding: "4px",
               }}
-              placeholder="Marqueses&#10;Rapinas&#10;Aliança da Floresta..."
-            />
+            >
+              {FACTIONS.map((faction) => {
+                const isSelected = selectedFactions.includes(faction.name);
+                return (
+                  <label
+                    key={faction.name}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "12px",
+                      backgroundColor: isSelected
+                        ? "rgba(255, 107, 157, 0.15)"
+                        : "rgba(255, 255, 255, 0.05)",
+                      borderRadius: "8px",
+                      border: `1px solid ${
+                        isSelected
+                          ? "rgba(255, 107, 157, 0.4)"
+                          : "rgba(255, 255, 255, 0.1)"
+                      }`,
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = isSelected
+                        ? "rgba(255, 107, 157, 0.25)"
+                        : "rgba(255, 255, 255, 0.1)";
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = isSelected
+                        ? "rgba(255, 107, 157, 0.15)"
+                        : "rgba(255, 255, 255, 0.05)";
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleFaction(faction.name)}
+                      style={{
+                        marginRight: "12px",
+                        width: "18px",
+                        height: "18px",
+                        cursor: "pointer",
+                        accentColor: "#ff6b9d",
+                      }}
+                    />
+                    <span
+                      style={{
+                        flex: 1,
+                        color: "#fff",
+                        fontSize: "1em",
+                      }}
+                    >
+                      {faction.name}
+                    </span>
+                    <span
+                      style={{
+                        color: "#64ffda",
+                        fontWeight: "bold",
+                        fontSize: "0.95em",
+                        backgroundColor: "rgba(100, 255, 218, 0.1)",
+                        padding: "4px 10px",
+                        borderRadius: "6px",
+                      }}
+                    >
+                      {faction.reach}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            <div
+              style={{
+                marginTop: "12px",
+                color: "#a8b2d1",
+                fontSize: "0.9em",
+                textAlign: "center",
+              }}
+            >
+              {selectedFactions.length} facção(ões) selecionada(s)
+            </div>
           </div>
         </div>
 
@@ -330,6 +533,54 @@ export default function RootSorter() {
             >
               🎉 Resultados do Sorteio
             </h2>
+
+            {/* Informação de Alcance */}
+            {reachInfo && (
+              <div
+                style={{
+                  marginBottom: "24px",
+                  padding: "20px",
+                  borderRadius: "12px",
+                  backgroundColor: reachInfo.valid
+                    ? "rgba(100, 255, 218, 0.1)"
+                    : "rgba(255, 107, 157, 0.1)",
+                  border: `2px solid ${
+                    reachInfo.valid ? "#64ffda" : "#ff6b9d"
+                  }`,
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "1.5em",
+                    fontWeight: "bold",
+                    color: reachInfo.valid ? "#64ffda" : "#ff6b9d",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {reachInfo.valid
+                    ? "✅ Sorteio Válido!"
+                    : "⚠️ Sorteio Inválido"}
+                </div>
+                <div style={{ color: "#a8b2d1", fontSize: "1.1em" }}>
+                  <strong>Alcance Total:</strong> {reachInfo.totalReach} |{" "}
+                  <strong>Mínimo Recomendado:</strong> {reachInfo.minReach}
+                </div>
+                {!reachInfo.valid && (
+                  <div
+                    style={{
+                      color: "#ff6b9d",
+                      fontSize: "0.95em",
+                      marginTop: "8px",
+                    }}
+                  >
+                    O alcance das facções selecionadas é menor que o recomendado
+                    para {results.length} jogadores. Considere adicionar facções
+                    com maior alcance ou fazer um novo sorteio.
+                  </div>
+                )}
+              </div>
+            )}
             <div style={{ display: "grid", gap: "12px" }}>
               {results.map((item, index) => (
                 <div
